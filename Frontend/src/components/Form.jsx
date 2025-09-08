@@ -3,6 +3,7 @@ import { Link , useNavigate} from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useCreateUser } from '../../hooks/Useuser';
 
+
 export default function LuxuryForm() {
   const {
     register,

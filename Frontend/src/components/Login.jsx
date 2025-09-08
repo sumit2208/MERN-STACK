@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useLoginUser } from '../../hooks/Useuser';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Import useAuth
-import {   enqueueSnackbar } from 'notistack';
+import {enqueueSnackbar } from 'notistack';
 
 
 export default function Login() {
@@ -20,32 +20,29 @@ export default function Login() {
 
   const onSubmit = (formData) => {
     mutate(formData, {
-      onSuccess: (data) => {
-        console.log('Login response:', data); // Debug log
+      onSuccess: (data) => { 
 
         // ✅ IMPORTANT: Set user context BEFORE navigation
         if (data?.user) {
           setUser(data.user); // This will also update localStorage
         }
-
-        // Store token separately if needed
         if (data?.token) {
           localStorage.setItem('token', data.token);
         }
-
         enqueueSnackbar('Login successful!',  {variant:"success"});
         reset();
- 
-
-        // Navigate to home page
+        
         navigate('/');
       },
       onError: (err) => {
-        console.error('Login error:', err); // Debug log
+        console.error('Login error:', err); 
         enqueueSnackbar(err?.response?.data?.message || 'Login failed', {variant:"error"});
       }
     });
   };
+
+
+ 
 
   return (
     <>

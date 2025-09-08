@@ -6,6 +6,7 @@ import RedirectIfAuthenticated from "./components/RedirectIfAuthenticated";
 import Home from "./components/Home";
 import Login from "./components/Login";
 import LuxuryForm from "./components/Form"; // register form
+import Example from "./components/Example";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Home />
+              <Example/>
             </ProtectedRoute>
           }
         />
