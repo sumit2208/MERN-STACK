@@ -1,103 +1,151 @@
-import React from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-// import Dashboard from './Dashboard';
-// import SideView from './SideView';
+import React, { useEffect, useState } from "react";
+import supabase from "../config/supabaseClient";
+import NewsCard from "../components/NewsCard";
+import AdminLogin from "./Login";
 
 const Home = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [showAdmin, setShowAdmin] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const categories = [
+    "All",
+    "Health",
+    "Technology",
+    "Sports",
+    "Business",
+    "Politics",
+    "Entertainment",
+  ];
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      setLoading(true);
+      setErrorMsg(null);
+
+      let query = supabase
+        .from("news")
+        .select("id, title, slug, image_url, video_url, content, created_at")
+        .order("created_at", { ascending: false });
+
+      if (selectedCategory !== "All") {
+        query = query.eq("slug", selectedCategory.toLowerCase());
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("❌ Error fetching news:", error);
+        setErrorMsg("Failed to fetch news. Please try again later.");
+      } else {
+        setNews(data || []);
+      }
+
+      setLoading(false);
+    };
+
+    fetchNews();
+  }, [selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="bg-gray-100 min-h-screen">
       {/* Header */}
-      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl flex items-center justify-center mr-3">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 1v6h8V1" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Welcome Home!</h1>
-                {user && (
-                  <p className="text-white/70 text-sm">
-                    Hello, {user.name || user.email || 'User'}
-                  </p>
-                )}
-              </div>
-            </div>
-            
-            <button
-              onClick={handleLogout}
-              className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300"
-            >
-              Logout
-            </button>
-          </div>
+      <header className="bg-blue-600 text-white py-6 shadow flex items-center justify-between px-6">
+        {/* Logo */}
+        <div className="flex items-center space-x-3">
+          <img
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPqEEI_x50vlET-ur5DsLdnNmprdM-L9HTUw&s"
+            alt="Logo"
+            className="w-14 h-14 rounded-full border-2 border-white shadow-md"
+          />
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-8 py-12">
-        <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold text-white mb-4">
-            🎉 Login Successful!
-          </h2>
-          <p className="text-white/70 text-lg">
-            You have successfully logged in and reached the home page.
+ 
+        <div className="text-center flex-1">
+          <h1 className="text-3xl sm:text-4xl font-extrabold">🗞️ Latest News Updates</h1>
+          <p className="text-blue-100 text-sm mt-1">
+            Stay informed with the latest stories and breaking headlines.
           </p>
         </div>
+ 
+        <div>
+          <button
+            onClick={() => setShowAdmin(true)}
+            className="bg-white text-blue-700 font-semibold py-2 px-5 rounded-full shadow hover:bg-blue-50 transition-all"
+          >
+            ADMIN ACCESS
+          </button>
+        </div>
+      </header>
+ 
+      {showAdmin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="relative bg-white rounded-xl shadow-2xl p-6 w-[90%] sm:w-[400px]">
+           
+            <button
+              onClick={() => setShowAdmin(false)}
+              className="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-xl"
+            >
+              ✕
+            </button>
 
-        {/* Debug Info */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 mb-8">
-          <h3 className="text-xl font-semibold text-white mb-4">Debug Info:</h3>
-          <div className="text-white/70 space-y-2">
-            <p><strong>User Data:</strong> {user.name ? JSON.stringify(user.name, null, 2) : 'No user data'}</p>
-            <p><strong>Token:</strong> {localStorage.getItem('token') ? 'Present' : 'Missing'}</p>
-            <p><strong>Stored User:</strong> {localStorage.getItem('user') ? 'Present' : 'Missing'}</p>
+            <AdminLogin onLoginSuccess={() => setShowAdmin(false)} />
           </div>
         </div>
+      )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-            <h3 className="text-xl font-semibold text-white mb-2">Dashboard</h3>
-            <p className="text-white/70 mb-4">View your analytics and insights</p>
-            <button className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg">
-              Open Dashboard
-            </button>
+     
+      <div className="max-w-5xl mx-auto flex flex-wrap justify-center gap-3 mt-8">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+              selectedCategory === cat
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+ 
+      <section className="max-w-7xl mx-auto px-4 py-10">
+        {loading ? (
+          <p className="text-gray-500 text-center animate-pulse">⏳ Loading news...</p>
+        ) : errorMsg ? (
+          <p className="text-center text-red-600">{errorMsg}</p>
+        ) : news.length > 0 ? (
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {news.map((item) => (
+              <NewsCard
+                key={item.id}
+                title={item.title}
+                slug={item.slug}
+                category={item.slug || "General"}
+                image={item.image_url}
+                description={
+                  item.content
+                    ? item.content.slice(0, 150) + "..."
+                    : "No content available."
+                }
+                date={new Date(item.created_at).toLocaleDateString()}
+                video_url={item.video_url}
+              />
+            ))}
           </div>
-
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-            <h3 className="text-xl font-semibold text-white mb-2">Profile</h3>
-            <p className="text-white/70 mb-4">Manage your account settings</p>
-            <button className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-2 rounded-lg">
-              View Profile
-            </button>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-            <h3 className="text-xl font-semibold text-white mb-2">Settings</h3>
-            <p className="text-white/70 mb-4">Customize your preferences</p>
-            <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg">
-              Open Settings
-            </button>
-          </div>
-        </div>
-
-        {/* Uncomment when ready */}
-        {/* <SideView /> */}
-        {/* <Dashboard /> */}
-      </main>
+        ) : (
+          <p className="text-center text-gray-500">
+            📰 No news available for "{selectedCategory}".
+          </p>
+        )}
+      </section>
+ 
+      <footer className="bg-gray-100 py-4 text-center text-gray-500 text-sm border-t">
+        © {new Date().getFullYear()} News Portal — All rights reserved.
+      </footer>
     </div>
   );
 };
